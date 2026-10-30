@@ -55,3 +55,29 @@ enregistrés dans le module QML `Mixxx` (`src/qml/`). À confirmer.
 - [ ] Rechercher d'autres déréférencements de widgets de l'ancienne interface
       appelés depuis le QML (`src/qml/*proxy.cpp`).
 - [ ] Ajouter des tests pour tout type modifié (voir les tests ci-dessus).
+
+## Complément : preuves relevées au lancement de LateNightQML (Qt 6.4.2)
+
+Lancement réel du skin `LateNightQML` (`--developer`, Linux Mint 22.3, Qt 6.4.2),
+journal d'avertissements QML :
+
+- `ApplicationMenuActions.qml:57: TypeError: Property 'menuShortcut' of object
+  QQuickApplication(0x...) is not a function` : l'objet reçu pour
+  `Mixxx.Application` est bien un `QQuickApplication` (l'objet `Application` de
+  Qt), pas le singleton `QmlApplicationProxy`. Cela renforce le point 1 ci-dessus ;
+  la cause (conflit de nom avec `QtQuick`) reste une hypothèse non vérifiée.
+- Conséquences observées : `Connections: Detected function
+  "onMenuShortcutsChanged"` et `"onApplicationMenuRequested"` sans signal
+  correspondant ; `ApplicationMenuShortcuts.qml:72: Cannot read property
+  'length' of undefined` ; `Toolbar.qml:1062:21: Unable to assign [undefined] to
+  bool`.
+- Sans rapport avec `Application`, mais propre à Qt 6.4.2 d'après le message :
+  `Cannot instantiate bound component outside its creation context` pour
+  `MicAux/AuxUnit.qml`, `MicAux/MicUnit.qml` et `Samplers/SamplersRack.qml`.
+  Ces fichiers combinent `pragma ComponentBehavior: Bound` et un `Loader` dont
+  le `sourceComponent` est un `Component` du même fichier. Effet probable : racks
+  Mic/Aux et Samplers vides. À confirmer par une capture d'écran
+  (`tools/latenightqml_screenshot.sh`, branche `LATENIGHTQML`).
+
+Piste : tester sur Qt 6.5 ou plus pour savoir lesquels de ces défauts
+disparaissent avec la version de Qt.
